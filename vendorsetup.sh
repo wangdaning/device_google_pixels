@@ -204,7 +204,11 @@ export FOX_DELETE_AROMAFM=1
 export OF_QUICK_BACKUP_LIST="/boot;/vendor_boot;/data;"
 export OF_UNBIND_SDCARD_F2FS=1
 export OF_BIND_MOUNT_SDCARD_ON_FORMAT=1
-export OF_DYNAMIC_FULL_SIZE=8531214336
+if [ "$DEVICE_BUILD_FLAG" = "zumapro" ] || [ "$DEVICE_BUILD_FLAG" = "laguna" ]; then
+    export OF_DYNAMIC_FULL_SIZE=12884901888
+else
+    export OF_DYNAMIC_FULL_SIZE=8531214336
+fi
 
 # --- Battery ---
 export OF_USE_LEGACY_BATTERY_SERVICES=1

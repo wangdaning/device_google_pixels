@@ -14,8 +14,13 @@ LOCAL_PATH := device/google/pixels
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/compression.mk)
 
 # API & VNDK
+ifeq ($(DEVICE_BUILD_FLAG),laguna)
+PRODUCT_SHIPPING_API_LEVEL := 36
+PRODUCT_TARGET_VNDK_VERSION := 36
+else
 PRODUCT_SHIPPING_API_LEVEL := 34
 PRODUCT_TARGET_VNDK_VERSION := 34
+endif
 
 # Dynamic Partitions
 PRODUCT_USE_DYNAMIC_PARTITIONS := true

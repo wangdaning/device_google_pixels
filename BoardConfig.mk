@@ -124,9 +124,16 @@ VENDOR_CMDLINE := "dyndbg=\"func alloc_contig_dump_pages +p\" \
         sysctl.kernel.sched_pelt_multiplier=4 \
         kasan=off \
         at24.write_timeout=100 \
+        fips140.load_sequential=1 \
+        exynos_drm.load_sequential=1 \
+        g2d.load_sequential=1 \
+        samsung_iommu_v9.load_sequential=1 \
         log_buf_len=1024K bootconfig"
 else ifeq ($(DEVICE_BUILD_FLAG),laguna)
 VENDOR_CMDLINE := "dyndbg=\"func alloc_contig_dump_pages +p\" \
+        earlycon=exynos4210,0x10870000 \
+        console=ttySAC0,115200 \
+        androidboot.console=ttySAC0 printk.devkmsg=on \
         cgroup.memory=nokmem \
         rcupdate.rcu_expedited=1 \
 		aoc_core.aoc_enable_gsa_boot=1 \
@@ -134,35 +141,21 @@ VENDOR_CMDLINE := "dyndbg=\"func alloc_contig_dump_pages +p\" \
         rcu_nocbs=all \
         rcutree.enable_rcu_lazy \
         swiotlb=noforce \
+        cma_sysfs.experimental=Y \
         disable_dma32=on \
         sysctl.kernel.sched_pelt_multiplier=4 \
         kasan=off \
         at24.write_timeout=100 \
         fips140.load_sequential=1 \
         vh_sched.load_sequential=1 \
+        exynos_drm.load_sequential=1 \
+        g2d.load_sequential=1 \
+        samsung_iommu_v9.load_sequential=1 \
         init_on_alloc=0 \
 		init_on_free=1 \
         pcie_port_pm=off \
         log_buf_len=1024K bootconfig"
 else ifeq ($(DEVICE_BUILD_FLAG),gs101)
-VENDOR_CMDLINE := "dyndbg=\"func alloc_contig_dump_pages +p\" \\
-        earlycon=exynos4210,0x10A00000 \\
-        console=ttySAC0,115200 \\
-        androidboot.console=ttySAC0 \\
-        printk.devkmsg=on \\
-        swiotlb=noforce \\
-        cma_sysfs.experimental=Y \\
-        cgroup_disable=memory \\
-        rcupdate.rcu_expedited=1 \\
-        androidboot.usbcontroller=11110000.dwc3 \\
-        rcu_nocbs=all \\
-        stack_depot_disable=off \\
-        page_pinner=on \\
-        swiotlb=1024 \\
-        disable_dma32=on \\
-        at24.write_timeout=100 \\
-        log_buf_len=1024K \\
-        bootconfig"
 VENDOR_CMDLINE := "dyndbg=\"func alloc_contig_dump_pages +p\" \
         earlycon=exynos4210,0x10A00000 \
         console=ttySAC0,115200 \
@@ -172,7 +165,7 @@ VENDOR_CMDLINE := "dyndbg=\"func alloc_contig_dump_pages +p\" \
         cma_sysfs.experimental=Y \
         cgroup_disable=memory \
         rcupdate.rcu_expedited=1 \
-        androidboot.usbcontroller=11210000.dwc3 \
+        androidboot.usbcontroller=11110000.dwc3 \
         rcu_nocbs=all \
         stack_depot_disable=off \
         page_pinner=on \
@@ -198,6 +191,10 @@ VENDOR_CMDLINE := "dyndbg=\"func alloc_contig_dump_pages +p\" \
         swiotlb=1024 \
         disable_dma32=on \
         at24.write_timeout=100 \
+        fips140.load_sequential=1 \
+        exynos_drm.load_sequential=1 \
+        g2d.load_sequential=1 \
+        samsung_iommu_v9.load_sequential=1 \
         log_buf_len=1024K \
         bootconfig"
 endif
@@ -224,10 +221,10 @@ BOARD_MKBOOTIMG_ARGS += --tags_offset $(BOARD_KERNEL_TAGS_OFFSET)
 BOARD_MKBOOTIMG_ARGS += --vendor_cmdline $(VENDOR_CMDLINE)
 
 # Partitions - Blocks
-ifeq ($(DEVICE_BUILD_FLAG),zumapro)
-BOARD_FLASH_BLOCK_SIZE := 4096
-else
+ifeq ($(filter zumapro laguna,$(DEVICE_BUILD_FLAG)),)
 BOARD_FLASH_BLOCK_SIZE := 131072
+else
+BOARD_FLASH_BLOCK_SIZE := 4096
 endif
 
 # gs101: vendor_boot contains DLKM+DTB — must patch stock, not overwrite
@@ -250,15 +247,24 @@ BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
 
 # Partitions - Super/Logical
+ifeq ($(filter zumapro laguna,$(DEVICE_BUILD_FLAG)),)
 BOARD_SUPER_PARTITION_SIZE := 8531214336
+BOARD_GOOGLE_DYNAMIC_PARTITIONS_SIZE := 8527020032
+else
+BOARD_SUPER_PARTITION_SIZE := 12884901888
+BOARD_GOOGLE_DYNAMIC_PARTITIONS_SIZE := 12880707584
+endif
 BOARD_SUPER_PARTITION_GROUPS := google_dynamic_partitions
 BOARD_GOOGLE_DYNAMIC_PARTITIONS_PARTITION_LIST := system system_ext product vendor vendor_dlkm
-BOARD_GOOGLE_DYNAMIC_PARTITIONS_SIZE := 8527020032
 
 GOOGLE_BOARD_PLATFORMS += $(DEVICE_BUILD_FLAG)
 TARGET_BOARD_PLATFORM := $(DEVICE_BUILD_FLAG)
 PRODUCT_PLATFORM := $(DEVICE_BUILD_FLAG)
-TARGET_BOARD_PLATFORM_GPU := mali-g71
+ifeq ($(DEVICE_BUILD_FLAG),laguna)
+TARGET_BOARD_PLATFORM_GPU := powervr
+else
+TARGET_BOARD_PLATFORM_GPU := mali
+endif
 BOARD_VINTF_CHECK := false
 
 # Properties
@@ -358,6 +364,3 @@ BOARD_RECOVERY_IMAGE_PREPARE = bash $(DEVICE_PATH)/fox_build_callback.sh $(TARGE
 
 # Workaround
 TARGET_COPY_OUT_VENDOR := vendor
-
-earlycon=exynos4210,0x10870000 console=ttySAC0,115200 androidboot.console=ttySAC0 printk.devkmsg=on cma_sysfs.experimental=Y rcupdate.rcu_expedited=1 rcu_nocbs=all rcutree.enable_rcu_lazy swiotlb=noforce cgroup.memory=nokmem disable_dma32=on sysctl.kernel.sched_pelt_multiplier=4 kasan=off at24.write_timeout=100 log_buf_len=1024K fips140.load_sequential=1 exynos_drm.load_sequential=1 g2d.load_sequential=1 samsung_iommu_v9.load_sequential=1 bootconfig]
-dyndbg="func alloc_contig_dump_pages +p" earlycon=exynos4210,0x10A00000 console=ttySAC0,115200 androidboot.console=ttySAC0 printk.devkmsg=on swiotlb=noforce cma_sysfs.experimental=Y cgroup_disable=memory rcupdate.rcu_expedited=1 androidboot.usbcontroller=11210000.dwc3 rcu_nocbs=all stack_depot_disable=off page_pinner=on swiotlb=1024 disable_dma32=on at24.write_timeout=100 log_buf_len=1024K bootconfig
